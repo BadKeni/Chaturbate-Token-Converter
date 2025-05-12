@@ -1,0 +1,54 @@
+// ==UserScript==
+// @name         Chaturbate Token Converter
+// @namespace    https://github.com/Mark-Srtelcov
+// @version      1.5
+// @description  Конвертирует токены в доллары на Chaturbate (1 Token → 0.05 $)
+// @author       Mark Srtelcov
+// @match        *://*.chaturbate.com/*
+// @grant        none
+// @run-at       document-end
+// @license      MIT
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    function convertTokensToDollars() {
+        const tokenDisplays = document.querySelectorAll('span.tokencount:not([data-converted])');
+
+        tokenDisplays.forEach(display => {
+            if (display.textContent.includes('$')) return;
+
+            const tokens = parseFloat(display.textContent);
+            if (!tokens) return;
+
+            display.textContent = (tokens / 20).toFixed(2) + ' $';
+
+            const container = display.closest('a.tokencountlink');
+            if (container) {
+                const textNodes = [...container.childNodes]
+                    .filter(node => node.nodeType === 3 && node.textContent.trim() === 'Token');
+                
+                textNodes.forEach(node => node.remove());
+            }
+
+            display.dataset.converted = true;
+        });
+    }
+
+    function initializeConverter() {
+        convertTokensToDollars();
+        
+        const checkInterval = setInterval(convertTokensToDollars, 2000);
+        
+        window.addEventListener('unload', () => {
+            clearInterval(checkInterval);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', initializeConverter);
+    } else {
+        initializeConverter();
+    }
+})();
